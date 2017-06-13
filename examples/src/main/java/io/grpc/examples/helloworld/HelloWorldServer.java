@@ -35,6 +35,7 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.logging.Logger;
 
 /**
@@ -92,7 +93,9 @@ public class HelloWorldServer {
 
     @Override
     public void sayHello(HelloRequest req, StreamObserver<HelloReply> responseObserver) {
-      HelloReply reply = HelloReply.newBuilder().setGreetingText("Hello " + req.getName()).build();
+      long age = Calendar.getInstance().get(Calendar.YEAR) - req.getYearOfBirth();
+      HelloReply reply = HelloReply.newBuilder().setGreetingText(
+          String.format("Hello %s, you are %s years old", req.getName(), age)).build();
       responseObserver.onNext(reply);
       responseObserver.onCompleted();
     }

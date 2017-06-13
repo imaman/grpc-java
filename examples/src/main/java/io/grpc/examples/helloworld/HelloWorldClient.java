@@ -66,9 +66,9 @@ public class HelloWorldClient {
   }
 
   /** Say hello to server. */
-  public void greet(String name) {
+  public void greet(String name, int yearOfBirth) {
     logger.info("Will try to greet " + name + " ...");
-    HelloRequest request = HelloRequest.newBuilder().setName(name).build();
+    HelloRequest request = HelloRequest.newBuilder().setName(name).setYearOfBirth(yearOfBirth).build();
     HelloReply response;
     try {
       response = blockingStub.sayHello(request);
@@ -91,7 +91,7 @@ public class HelloWorldClient {
       if (args.length > 0) {
         user = args[0]; /* Use the arg as the name to greet if provided */
       }
-      client.greet(user);
+      client.greet(user, 2008);
     } finally {
       client.shutdown();
     }
