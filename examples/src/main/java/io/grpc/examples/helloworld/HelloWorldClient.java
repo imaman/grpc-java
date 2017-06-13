@@ -31,14 +31,12 @@
 
 package io.grpc.examples.helloworld;
 
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.StatusRuntimeException;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 
 /**
@@ -78,7 +76,7 @@ public class HelloWorldClient {
 
       @Override
       public void onNext(HelloReply reply) {
-        logger.info("Got reply: " + reply.getGreetingText());
+        logger.info("Got reply:\n" + reply.getGreetingText());
       }
     };
     
@@ -86,6 +84,25 @@ public class HelloWorldClient {
     asyncStub.sayHello(request, replyObserver);
   }
 
+  public void getFeed(String userId, Runnable onDone) {
+    StreamObserver<GetFeedResponse> responseObserver = new StreamObserver<GetFeedResponse>() {
+      @Override public void onCompleted() { onDone.run(); }
+      @Override public void onError(Throwable arg0) {}
+
+      @Override
+      public void onNext(GetFeedResponse repsonse) {
+        logger.info("Got reply:\n" + repsonse.toString());
+      }
+    };
+    
+    GetFeedRequest request = GetFeedRequest.newBuilder()
+        .setUserId(userId)
+        .addSearchTerms("word_1")
+        .addSearchTerms("word_2")
+        .build();
+    asyncStub.getFeed(request, responseObserver);
+  }
+  
   /**
    * Greet server. If provided, the first element of {@code args} is the name to use in the
    * greeting.
@@ -97,8 +114,10 @@ public class HelloWorldClient {
     if (args.length > 0) {
       user = args[0]; /* Use the arg as the name to greet if provided */
     }
-    CountDownLatch latch = new CountDownLatch(1);
+    CountDownLatch latch = new CountDownLatch(3);
     client.greet(user, 2008, latch::countDown);
+    client.getFeed("1", latch::countDown);
+    client.getFeed("2", latch::countDown);
     latch.await();
     client.shutdown();
   }
