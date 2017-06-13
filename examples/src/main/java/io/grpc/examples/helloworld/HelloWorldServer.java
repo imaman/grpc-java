@@ -105,24 +105,42 @@ public class HelloWorldServer {
       responseObserver.onNext(reply);
       responseObserver.onCompleted();
     }
+    
+    public static class Counter {
+      private int n = 0;
+      
+      public synchronized int increment() {
+        ++n;
+        return n;
+      }
+    }
+    
 
     @Override
     public void getFeed(GetFeedRequest req, StreamObserver<GetFeedResponse> responseObserver) {
+      final GetFeedResponse.Builder builder = GetFeedResponse.newBuilder();
+      final Counter counter = new Counter();
+      
       model.getPosts(req.getUserId(), (List<Map<String, String>> records) -> {
         List<GetFeedResponse.Post> ps = records.stream()
           .filter((x) -> matches(x, req.getSearchTermsList()))
           .map(x -> toPost(x)).collect(Collectors.toList());
-        
-        final GetFeedResponse.Builder builder = GetFeedResponse.newBuilder();
         builder.addAllPost(ps);
-        
-        model.getTotalPosts(req.getUserId(), (Long n) -> {
-          builder.setTotalPostCount(n);
-          responseObserver.onNext(builder.build());
-          responseObserver.onCompleted();
-        });
+        finish(responseObserver, builder, counter);
       });
       
+      model.getTotalPosts(req.getUserId(), (Long n) -> {
+        builder.setTotalPostCount(n);
+        finish(responseObserver, builder, counter);
+      });
+    }
+
+    private void finish(StreamObserver<GetFeedResponse> responseObserver, GetFeedResponse.Builder builder,
+        Counter counter) {
+      if (counter.increment() == 2) {
+        responseObserver.onNext(builder.build());
+        responseObserver.onCompleted();
+      }
     }
     
     private GetFeedResponse.Post toPost(Map<String, String> map) {
