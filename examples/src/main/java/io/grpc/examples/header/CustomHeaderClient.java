@@ -83,7 +83,7 @@ public class CustomHeaderClient {
       logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
       return;
     }
-    logger.info("Greeting: " + response.getMessage());
+    logger.info("Greeting: " + response.getGreetingText());
   }
 
   /**

@@ -108,7 +108,7 @@ public class HelloJsonServer {
   private static class GreeterImpl implements BindableService {
 
     private void sayHello(HelloRequest req, StreamObserver<HelloReply> responseObserver) {
-      HelloReply reply = HelloReply.newBuilder().setMessage("Hello " + req.getName()).build();
+      HelloReply reply = HelloReply.newBuilder().setGreetingText("Hello " + req.getName()).build();
       responseObserver.onNext(reply);
       responseObserver.onCompleted();
     }

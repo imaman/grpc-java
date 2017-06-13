@@ -76,7 +76,7 @@ public class HelloWorldClient {
       logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
       return;
     }
-    logger.info("Greeting: " + response.getMessage());
+    logger.info("Greeting: " + response.getGreetingText());
   }
 
   /**
@@ -87,7 +87,7 @@ public class HelloWorldClient {
     HelloWorldClient client = new HelloWorldClient("localhost", 50051);
     try {
       /* Access a service running on the local machine on port 50051 */
-      String user = "world";
+      String user = "Batman";
       if (args.length > 0) {
         user = args[0]; /* Use the arg as the name to greet if provided */
       }
