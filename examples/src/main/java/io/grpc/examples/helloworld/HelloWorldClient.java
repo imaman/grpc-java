@@ -98,8 +98,8 @@ public class HelloWorldClient {
     
     GetFeedRequest request = GetFeedRequest.newBuilder()
         .setUserId(userId)
-        .addSearchTerms("word_1")
-        .addSearchTerms("word_2")
+        .addSearchFor("word_1")
+        .addSearchFor("word_2")
         .build();
     asyncStub.withDeadlineAfter(500, TimeUnit.MILLISECONDS).getFeed(request, responseObserver);
   }

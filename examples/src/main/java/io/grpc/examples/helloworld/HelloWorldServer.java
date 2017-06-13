@@ -123,7 +123,7 @@ public class HelloWorldServer {
       
       model.getPosts(req.getUserId(), (List<Map<String, String>> records) -> {
         List<GetFeedResponse.Post> ps = records.stream()
-          .filter((x) -> matches(x, req.getSearchTermsList()))
+          .filter((x) -> matches(x, req.getSearchForList()))
           .map(x -> toPost(x)).collect(Collectors.toList());
         builder.addAllPost(ps);
         finish(responseObserver, builder, counter);

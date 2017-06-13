@@ -57,7 +57,7 @@ message HelloReply {
 
 message GetFeedRequest {
   string user_id = 1;
-  repeated string search_terms = 3;
+  repeated string search_for = 3;
 }
 
 message GetFeedResponse {
