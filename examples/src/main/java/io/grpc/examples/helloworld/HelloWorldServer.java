@@ -31,12 +31,17 @@
 
 package io.grpc.examples.helloworld;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
-import java.io.IOException;
-import java.util.Calendar;
-import java.util.logging.Logger;
 
 /**
  * Server that manages startup/shutdown of a {@code Greeter} server.
@@ -90,6 +95,7 @@ public class HelloWorldServer {
   }
 
   static class GreeterImpl extends GreeterGrpc.GreeterImplBase {
+    private Model model = new Model();
 
     @Override
     public void sayHello(HelloRequest req, StreamObserver<HelloReply> responseObserver) {
@@ -99,5 +105,43 @@ public class HelloWorldServer {
       responseObserver.onNext(reply);
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void getFeed(GetFeedRequest req, StreamObserver<GetFeedResponse> responseObserver) {
+      model.getPosts(req.getUserId(), (List<Map<String, String>> records) -> {
+        List<GetFeedResponse.Post> ps = records.stream()
+          .filter((x) -> matches(x, req.getSearchTermsList()))
+          .map(x -> toPost(x)).collect(Collectors.toList());
+        
+        final GetFeedResponse.Builder builder = GetFeedResponse.newBuilder();
+        builder.addAllPost(ps);
+        
+        model.getTotalPosts(req.getUserId(), (Long n) -> {
+          builder.setTotalPostCount(n);
+          responseObserver.onNext(builder.build());
+          responseObserver.onCompleted();
+        });
+      });
+      
+    }
+    
+    private GetFeedResponse.Post toPost(Map<String, String> map) {
+      GetFeedResponse.Post.Builder builder = GetFeedResponse.Post.newBuilder();
+      builder.setBody(map.get("body").toString());
+      builder.setLastChangedInMillis(Instant.parse(map.get("last_modified")).toEpochMilli());
+      builder.setTitle(map.get("title").toString());
+      return builder.build();
+    }
+
+    private boolean matches(Map<String, String> map, List<String> searchTerms) {
+      String body = map.get("body").toString();
+      for (String curr : searchTerms) {
+        if (body.contains(curr)) {
+          return true;
+        }
+      }
+      return false;
+    }
+    
   }
 }
