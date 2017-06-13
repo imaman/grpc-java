@@ -33,6 +33,7 @@ package io.grpc.examples.helloworld;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import io.grpc.ManagedChannel;
@@ -84,10 +85,10 @@ public class HelloWorldClient {
     asyncStub.sayHello(request, replyObserver);
   }
 
-  public void getFeed(String userId, Runnable onDone) {
+  public void getFeed(String userId, Runnable onDone, Consumer<Throwable> onError) {
     StreamObserver<GetFeedResponse> responseObserver = new StreamObserver<GetFeedResponse>() {
       @Override public void onCompleted() { onDone.run(); }
-      @Override public void onError(Throwable arg0) {}
+      @Override public void onError(Throwable e) { onError.accept(e); }
 
       @Override
       public void onNext(GetFeedResponse repsonse) {
@@ -100,7 +101,7 @@ public class HelloWorldClient {
         .addSearchTerms("word_1")
         .addSearchTerms("word_2")
         .build();
-    asyncStub.getFeed(request, responseObserver);
+    asyncStub.withDeadlineAfter(1, TimeUnit.NANOSECONDS).getFeed(request, responseObserver);
   }
   
   /**
@@ -116,8 +117,8 @@ public class HelloWorldClient {
     }
     CountDownLatch latch = new CountDownLatch(3);
     client.greet(user, 2008, latch::countDown);
-    client.getFeed("1", latch::countDown);
-    client.getFeed("2", latch::countDown);
+    client.getFeed("1", latch::countDown, t -> { logger.info("failure=" + t); latch.countDown(); });
+    client.getFeed("2", latch::countDown, t -> { logger.info("failure=" + t); latch.countDown(); });
     latch.await();
     client.shutdown();
   }
