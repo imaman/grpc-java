@@ -34,9 +34,12 @@ package io.grpc.examples.helloworld;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
+
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import io.grpc.stub.StreamObserver;
 
 /**
  * A simple client that requests a greeting from the {@link HelloWorldServer}.
@@ -45,7 +48,7 @@ public class HelloWorldClient {
   private static final Logger logger = Logger.getLogger(HelloWorldClient.class.getName());
 
   private final ManagedChannel channel;
-  private final GreeterGrpc.GreeterBlockingStub blockingStub;
+  private final GreeterGrpc.GreeterStub asyncStub;
 
   /** Construct client connecting to HelloWorld server at {@code host:port}. */
   public HelloWorldClient(String host, int port) {
@@ -58,7 +61,7 @@ public class HelloWorldClient {
   /** Construct client for accessing RouteGuide server using the existing channel. */
   HelloWorldClient(ManagedChannelBuilder<?> channelBuilder) {
     channel = channelBuilder.build();
-    blockingStub = GreeterGrpc.newBlockingStub(channel);
+    asyncStub = GreeterGrpc.newStub(channel);
   }
 
   public void shutdown() throws InterruptedException {
@@ -66,17 +69,21 @@ public class HelloWorldClient {
   }
 
   /** Say hello to server. */
-  public void greet(String name, int yearOfBirth) {
+  public void greet(String name, int yearOfBirth, Runnable onDone) {
     logger.info("Will try to greet " + name + " ...");
+    
+    StreamObserver<HelloReply> replyObserver = new StreamObserver<HelloReply>() {
+      @Override public void onCompleted() { onDone.run(); }
+      @Override public void onError(Throwable arg0) {}
+
+      @Override
+      public void onNext(HelloReply reply) {
+        logger.info("Got reply: " + reply.getGreetingText());
+      }
+    };
+    
     HelloRequest request = HelloRequest.newBuilder().setName(name).setYearOfBirth(yearOfBirth).build();
-    HelloReply response;
-    try {
-      response = blockingStub.sayHello(request);
-    } catch (StatusRuntimeException e) {
-      logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
-      return;
-    }
-    logger.info("Greeting: " + response.getGreetingText());
+    asyncStub.sayHello(request, replyObserver);
   }
 
   /**
@@ -85,15 +92,14 @@ public class HelloWorldClient {
    */
   public static void main(String[] args) throws Exception {
     HelloWorldClient client = new HelloWorldClient("localhost", 50051);
-    try {
-      /* Access a service running on the local machine on port 50051 */
-      String user = "Batman";
-      if (args.length > 0) {
-        user = args[0]; /* Use the arg as the name to greet if provided */
-      }
-      client.greet(user, 2008);
-    } finally {
-      client.shutdown();
+    /* Access a service running on the local machine on port 50051 */
+    String user = "Batman";
+    if (args.length > 0) {
+      user = args[0]; /* Use the arg as the name to greet if provided */
     }
+    CountDownLatch latch = new CountDownLatch(1);
+    client.greet(user, 2008, latch::countDown);
+    latch.await();
+    client.shutdown();
   }
 }
