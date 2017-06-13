@@ -101,7 +101,7 @@ public class HelloWorldClient {
         .addSearchTerms("word_1")
         .addSearchTerms("word_2")
         .build();
-    asyncStub.withDeadlineAfter(1, TimeUnit.NANOSECONDS).getFeed(request, responseObserver);
+    asyncStub.withDeadlineAfter(500, TimeUnit.MILLISECONDS).getFeed(request, responseObserver);
   }
   
   /**
