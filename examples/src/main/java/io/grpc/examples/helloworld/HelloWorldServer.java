@@ -102,8 +102,15 @@ public class HelloWorldServer {
       long age = Calendar.getInstance().get(Calendar.YEAR) - req.getYearOfBirth();
       HelloReply reply = HelloReply.newBuilder().setGreetingText(
           String.format("Hello %s, you are %s years old", req.getName(), age)).build();
-      responseObserver.onNext(reply);
-      responseObserver.onCompleted();
+
+      model.addPost(req.getName(), reply, (Exception e) -> {
+        if (e == null) {
+          responseObserver.onNext(reply);
+        } else {
+          responseObserver.onError(e);
+        }
+        responseObserver.onCompleted();
+      });
     }
     
     public static class Counter {
@@ -145,14 +152,12 @@ public class HelloWorldServer {
     
     private GetFeedResponse.Post toPost(Map<String, String> map) {
       GetFeedResponse.Post.Builder builder = GetFeedResponse.Post.newBuilder();
-      builder.setBody(map.get("body").toString());
-      builder.setLastChangedInMillis(Instant.parse(map.get("last_modified")).toEpochMilli());
-      builder.setTitle(map.get("title").toString());
+      builder.setBody(map.get("text").toString());
       return builder.build();
     }
 
     private boolean matches(Map<String, String> map, List<String> searchTerms) {
-      String body = map.get("body").toString();
+      String body = map.get("text").toString();
       for (String curr : searchTerms) {
         if (body.contains(curr)) {
           return true;

@@ -28,6 +28,29 @@ dependencies {
   compile "io.grpc:grpc-netty:${grpcVersion}"
   compile "io.grpc:grpc-protobuf:${grpcVersion}"
   compile "io.grpc:grpc-stub:${grpcVersion}"
+  // This is a REALLY BAD EXAMPLE for writing gradle files (absolute paths
+  // on the local machine should not be used). 
+  compile files("/home/imaman/tools/aws-java-sdk/lib/aws-java-sdk-1.11.151.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/aspectjrt-1.8.2.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/aspectjweaver.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/aws-swf-build-tools-1.1.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/commons-codec-1.9.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/commons-logging-1.1.3.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/freemarker-2.3.9.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/httpclient-4.5.2.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/httpcore-4.4.4.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/ion-java-1.0.2.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/jackson-annotations-2.6.0.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/jackson-core-2.6.6.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/jackson-databind-2.6.6.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/jackson-dataformat-cbor-2.6.6.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/javax.mail-api-1.4.6.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/jmespath-java-1.11.151.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/joda-time-2.8.1.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/spring-beans-3.0.7.RELEASE.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/spring-context-3.0.7.RELEASE.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/spring-core-3.0.7.RELEASE.jar",
+	"/home/imaman/tools/aws-java-sdk/third-party/lib/spring-test-3.0.7.RELEASE.jar")
 
   testCompile "junit:junit:4.11"
   testCompile "org.mockito:mockito-core:1.9.5"

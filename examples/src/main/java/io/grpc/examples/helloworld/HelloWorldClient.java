@@ -92,16 +92,15 @@ public class HelloWorldClient {
 
       @Override
       public void onNext(GetFeedResponse repsonse) {
-        logger.info("Got reply:\n" + repsonse.toString());
+        logger.info("Got feed reply:\n" + repsonse.toString());
       }
     };
     
     GetFeedRequest request = GetFeedRequest.newBuilder()
         .setUserId(userId)
-        .addSearchFor("word_1")
-        .addSearchFor("word_2")
+        .addSearchFor("are")
         .build();
-    asyncStub.withDeadlineAfter(500, TimeUnit.MILLISECONDS).getFeed(request, responseObserver);
+    asyncStub.withDeadlineAfter(15000, TimeUnit.MILLISECONDS).getFeed(request, responseObserver);
   }
   
   /**
@@ -111,15 +110,16 @@ public class HelloWorldClient {
   public static void main(String[] args) throws Exception {
     HelloWorldClient client = new HelloWorldClient("localhost", 50051);
     /* Access a service running on the local machine on port 50051 */
-    String user = "Batman";
-    if (args.length > 0) {
-      user = args[0]; /* Use the arg as the name to greet if provided */
-    }
-    CountDownLatch latch = new CountDownLatch(3);
-    client.greet(user, 2008, latch::countDown);
-    client.getFeed("1", latch::countDown, t -> { logger.info("failure=" + t); latch.countDown(); });
-    client.getFeed("2", latch::countDown, t -> { logger.info("failure=" + t); latch.countDown(); });
-    latch.await();
+    
+    CountDownLatch writeLatch = new CountDownLatch(2);
+    client.greet("Batman", 2008, writeLatch::countDown);
+    client.greet("Spiderman", 2009, writeLatch::countDown);
+    writeLatch.await();
+    
+    CountDownLatch readLatch = new CountDownLatch(2);
+    client.getFeed("Batman", readLatch::countDown, t -> { logger.info("failure=" + t); readLatch.countDown(); });
+    client.getFeed("Spiderman", readLatch::countDown, t -> { logger.info("failure=" + t); readLatch.countDown(); });
+    readLatch.await();
     client.shutdown();
   }
 }
