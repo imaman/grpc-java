@@ -35,6 +35,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -101,28 +102,27 @@ public class HelloWorldClient {
         .setUserId(user)
         .setPost(post)
         .build();
-    asyncStub.withDeadlineAfter(2500, TimeUnit.MILLISECONDS).addFeedEntry(request, responseObserver);    
+    asyncStub.withDeadlineAfter(5000, TimeUnit.MILLISECONDS).addFeedEntry(request, responseObserver);    
   }
   
 
-  public void getFeed(String userId, Runnable onDone, Consumer<Throwable> onError) {
+  public void getFeed(String userId, String searchTerm, Runnable onDone, Consumer<Throwable> onError) {
     StreamObserver<GetFeedResponse> responseObserver = new StreamObserver<GetFeedResponse>() {
       @Override public void onCompleted() { onDone.run(); }
       @Override public void onError(Throwable e) { onError.accept(e); }
 
       @Override
       public void onNext(GetFeedResponse repsonse) {
-        System.out.println("Here is the feed:");
-        for (Post curr : repsonse.getPostList()) {
-          System.out.println(curr.getTitle() + ": " + curr.getBody());
-        }
+        System.out.println("Here is " + userId + " feed's:" + repsonse.getPostList().stream()
+            .map(p -> p.getTitle() + ", " + p.getBody()).collect(Collectors.joining("; ")));
       }
     };
     
     GetFeedRequest request = GetFeedRequest.newBuilder()
         .setUserId(userId)
+        .addSearchFor(searchTerm)
         .build();
-    asyncStub.withDeadlineAfter(2500, TimeUnit.MILLISECONDS).getFeed(request, responseObserver);
+    asyncStub.withDeadlineAfter(5000, TimeUnit.MILLISECONDS).getFeed(request, responseObserver);
   }
   
   /**
@@ -134,16 +134,16 @@ public class HelloWorldClient {
     HelloWorldClient client = new HelloWorldClient("localhost", 50051);
     
 //    CountDownLatch writeLatch = new CountDownLatch(5);
-//    client.addPost("Batman", "Batman Begins", "1 blah blah blah", writeLatch::countDown, t -> { logger.info("f1=" + t); writeLatch.countDown(); });
-//    client.addPost("Batman", "The Dark Knight", "2 blah blah blah", writeLatch::countDown, t -> { logger.info("f2=" + t); writeLatch.countDown(); });
-//    client.addPost("Spiderman", "Spiderman", "3 blah blah blah", writeLatch::countDown, t -> { logger.info("f3=" + t); writeLatch.countDown(); });
-//    client.addPost("Spiderman", "The Amazing Spiderman", "4 blah blah blah", writeLatch::countDown, t -> { logger.info("f4=" + t); writeLatch.countDown(); });
-//    client.addPost("Batman", "The Dark Knight Rises", "5 blah blah blah", writeLatch::countDown, t -> { logger.info("f5=" + t); writeLatch.countDown(); });
+//    client.addPost("i-love-batman", "Batman Begins", "Featuring: Christian Bale", writeLatch::countDown, t -> { logger.info("f1=" + t); writeLatch.countDown(); });
+//    client.addPost("i-love-batman", "The Dark Knight", "Featuring: Christian Bale", writeLatch::countDown, t -> { logger.info("f2=" + t); writeLatch.countDown(); });
+//    client.addPost("FakePeterParker", "Spiderman", "Featuring: Tobey Maguire", writeLatch::countDown, t -> { logger.info("f3=" + t); writeLatch.countDown(); });
+//    client.addPost("FakePeterParker", "The Amazing Spiderman", "Featuring: Andrew Garfield", writeLatch::countDown, t -> { logger.info("f4=" + t); writeLatch.countDown(); });
+//    client.addPost("i-love-batman", "The Dark Knight Rises", "Featuring: Michael Caine", writeLatch::countDown, t -> { logger.info("f5=" + t); writeLatch.countDown(); });
 //    writeLatch.await();
 
     CountDownLatch readLatch = new CountDownLatch(2);
-    client.getFeed("Batman", readLatch::countDown, t -> { logger.info("f6=" + t); readLatch.countDown(); });
-    client.getFeed("Spiderman", readLatch::countDown, t -> { logger.info("f7=" + t); readLatch.countDown(); });
+    client.getFeed("i-love-batman", "Bale", readLatch::countDown, t -> { logger.info("f6=" + t); readLatch.countDown(); });
+    client.getFeed("FakePeterParker", "", readLatch::countDown, t -> { logger.info("f7=" + t); readLatch.countDown(); });
     readLatch.await();
     
     client.shutdown();

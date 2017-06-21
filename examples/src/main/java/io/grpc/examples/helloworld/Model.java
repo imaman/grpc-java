@@ -21,7 +21,6 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClientBuilder;
 import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
-import com.amazonaws.services.dynamodbv2.model.CreateTableResult;
 import com.amazonaws.services.dynamodbv2.model.DeleteTableRequest;
 import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
 import com.amazonaws.services.dynamodbv2.model.KeyType;
@@ -33,6 +32,7 @@ import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 public class Model {  
+  private static final String TABLE_NAME = "cs_236700_posts";
   private final AmazonDynamoDBAsync client;
   
   public Model() {
@@ -70,7 +70,7 @@ public class Model {
     keySchema.add(new KeySchemaElement().withAttributeName("Id").withKeyType(KeyType.HASH));
     
     CreateTableRequest ctr = new CreateTableRequest()
-      .withTableName("cs_236700_posts")
+      .withTableName(TABLE_NAME)
       .withKeySchema(keySchema)
       .withAttributeDefinitions(attributeDefinitions)
       .withProvisionedThroughput(new ProvisionedThroughput()
@@ -80,24 +80,21 @@ public class Model {
   }
 
   private void deleteTable() throws Exception {
-    DeleteTableRequest dtr = new DeleteTableRequest().withTableName("cs_236700_posts");
+    DeleteTableRequest dtr = new DeleteTableRequest().withTableName(TABLE_NAME);
     client.deleteTableAsync(dtr).get();
   }
 
   public void getPosts(String userId, Consumer<Exception> err, Consumer<List<Post>> done) {
-    
-    
     Map<String, AttributeValue> eav = new HashMap<String, AttributeValue>();
     eav.put(":val1", new AttributeValue().withS(userId));
   
-    ScanRequest scanRequest = new ScanRequest().withTableName("cs_236700_posts")
+    ScanRequest scanRequest = new ScanRequest().withTableName(TABLE_NAME)
         .withFilterExpression("PersonId = :val1")
         .withExpressionAttributeValues(eav);
     
     AsyncHandler<ScanRequest, ScanResult> h = new AsyncHandler<ScanRequest, ScanResult>() {
       @Override
       public void onError(Exception e) {
-        System.out.println("e=" + e);
         err.accept(e);
       }
 
@@ -125,23 +122,19 @@ public class Model {
     item.put("PersonId", new AttributeValue().withS(request.getUserId()));
     item.put("Post", new AttributeValue().withB(ByteBuffer.wrap(request.getPost().toByteArray())));
     pir.setItem(item);
-    pir.setTableName("cs_236700_posts");
+    pir.setTableName(TABLE_NAME);
     
     AsyncHandler<PutItemRequest, PutItemResult> h = new AsyncHandler<PutItemRequest, PutItemResult>() {
       @Override
       public void onError(Exception e) {
-        System.out.println("e=" + e);
         done.accept(e);
       }
 
       @Override
       public void onSuccess(PutItemRequest request, PutItemResult result) {
-        System.out.println("pir=" + result);
         done.accept(null);
       }
     };
-    System.err.println("putting " + pir);
     client.putItemAsync(pir, h);
   }
-
 }

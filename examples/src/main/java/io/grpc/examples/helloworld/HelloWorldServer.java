@@ -93,18 +93,7 @@ public class HelloWorldServer {
 
   static class GreeterImpl extends GreeterGrpc.GreeterImplBase {
     private Model model = new Model();
-
     
-    public static class Counter {
-      private int n = 0;
-      
-      public synchronized int increment() {
-        ++n;
-        return n;
-      }
-    }
-    
-
     @Override
     public void getFeed(GetFeedRequest req, StreamObserver<GetFeedResponse> responseObserver) {
       final GetFeedResponse.Builder builder = GetFeedResponse.newBuilder();
@@ -112,11 +101,22 @@ public class HelloWorldServer {
       model.getPosts(req.getUserId(), (Exception e) -> { responseObserver.onError(e); },
           (List<Post> posts) -> {
             for (Post curr : posts) {
-              builder.addPost(Post.newBuilder(curr).setBody(curr.getBody().toUpperCase()).build());
+              if (matches(req, curr)) 
+                builder.addPost(curr);
             }
             responseObserver.onNext(builder.build());
             responseObserver.onCompleted();
           });
+    }
+
+    private boolean matches(GetFeedRequest req, Post post) {
+      String body = post.getBody();
+      for (String term : req.getSearchForList()) {
+        if (body.contains(term)) {
+          return true;
+        }
+      }
+      return false;
     }
 
     @Override
