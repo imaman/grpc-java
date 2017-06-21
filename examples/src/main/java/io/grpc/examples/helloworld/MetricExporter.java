@@ -6,6 +6,10 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Sends metrics to HostedGraphite. 
+ * Dashboard: {@link https://www.hostedgraphite.com/7d389953/grafana/dashboard/db/cs_236700}
+ */
 public class MetricExporter {
   private static final String API_KEY = "b1696984-3968-440e-bb3b-ab1f0989d51a";
   private final Socket conn;
