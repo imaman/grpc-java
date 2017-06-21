@@ -132,7 +132,7 @@ public class HelloWorldServer {
     @Override
     public void getFeed(GetFeedRequest req, StreamObserver<GetFeedResponse> responseObserver) {
       exporter.increment("incoming_rpc.getFeed", 1);
-      final GetFeedResponse.Builder builder = GetFeedResponse.newBuilder();
+      GetFeedResponse.Builder builder = GetFeedResponse.newBuilder();
       
       Consumer<Exception> onErr = (Exception e) -> {
         exporter.increment("responding_error", 1);
