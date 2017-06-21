@@ -101,12 +101,19 @@ public class HelloWorldServer {
       exporter.increment("incoming_rpc.getFeed", 1);
       final GetFeedResponse.Builder builder = GetFeedResponse.newBuilder();
       
-      model.getPosts(req.getUserId(), (Exception e) -> { responseObserver.onError(e); },
+      Consumer<Exception> onErr = (Exception e) -> {
+        exporter.increment("responding_error", 1);
+        responseObserver.onError(e); 
+      };
+      model.getPosts(req.getUserId(), onErr,
           (List<Post> posts) -> {
             for (Post curr : posts) {
               if (matches(req, curr)) 
                 builder.addPost(curr);
             }
+            exporter.increment("model.num_posts", posts.size());
+            exporter.increment("model.num_matched_posts", builder.getPostCount());
+            exporter.increment("responding_error", 0);
             responseObserver.onNext(builder.build());
             responseObserver.onCompleted();
           });
