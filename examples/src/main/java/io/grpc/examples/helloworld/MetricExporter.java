@@ -12,12 +12,16 @@ public class MetricExporter {
   private final DataOutputStream dos;
   private final Map<String, Long> countersByName = new HashMap<>();
   
-  public MetricExporter() throws Exception {
-    conn = new Socket("7d389953.carbon.hostedgraphite.com", 2003);
-    dos = new DataOutputStream(conn.getOutputStream());
+  public MetricExporter() {
+    try {
+      conn = new Socket("7d389953.carbon.hostedgraphite.com", 2003);
+      dos = new DataOutputStream(conn.getOutputStream());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  public synchronized void increment(String name, long amount) throws IOException {
+  public synchronized void increment(String name, long amount) {
     Long n = countersByName.get(name);
     if (n == null) {
       n = 0L;
@@ -25,6 +29,10 @@ public class MetricExporter {
     
     n += amount;
     countersByName.put(name, n);
-    dos.writeBytes(String.format("%s.%s %s\n", API_KEY, name, n));
+    try {
+      dos.writeBytes(String.format("%s.%s %s\n", API_KEY, name, n));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

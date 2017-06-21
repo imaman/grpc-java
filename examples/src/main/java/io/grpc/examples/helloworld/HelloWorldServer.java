@@ -46,6 +46,9 @@ import io.grpc.stub.StreamObserver;
 public class HelloWorldServer {
   private static final Logger logger = Logger.getLogger(HelloWorldServer.class.getName());
 
+  private final MetricExporter exporter = new MetricExporter();
+  private Model model = new Model();
+  
   private Server server;
 
   private void start() throws IOException {
@@ -91,11 +94,11 @@ public class HelloWorldServer {
     server.blockUntilShutdown();
   }
 
-  static class GreeterImpl extends GreeterGrpc.GreeterImplBase {
-    private Model model = new Model();
+  private class GreeterImpl extends GreeterGrpc.GreeterImplBase {
     
     @Override
     public void getFeed(GetFeedRequest req, StreamObserver<GetFeedResponse> responseObserver) {
+      exporter.increment("incoming_rpc.getFeed", 1);
       final GetFeedResponse.Builder builder = GetFeedResponse.newBuilder();
       
       model.getPosts(req.getUserId(), (Exception e) -> { responseObserver.onError(e); },
@@ -121,6 +124,7 @@ public class HelloWorldServer {
 
     @Override
     public void addFeedEntry(AddFeedEntryRequest request, StreamObserver<AddFeedEntryResponse> responseObserver) {
+      exporter.increment("incoming_rpc.addFeedEntry", 1);
       Consumer<Exception> c = (Exception e) -> {
         if (e == null) 
           responseObserver.onCompleted();
