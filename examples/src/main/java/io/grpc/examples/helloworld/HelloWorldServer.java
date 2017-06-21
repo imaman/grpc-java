@@ -31,13 +31,22 @@
 
 package io.grpc.examples.helloworld;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Singleton;
+
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.examples.helloworld.Model.Cs236700SetupData;
 import io.grpc.stub.StreamObserver;
 
 /**
@@ -46,10 +55,15 @@ import io.grpc.stub.StreamObserver;
 public class HelloWorldServer {
   private static final Logger logger = Logger.getLogger(HelloWorldServer.class.getName());
 
-  private final MetricExporter exporter = new MetricExporter();
-  private Model model = new Model();
-  
+  private final MetricExporter exporter;
+  private final Model model;
   private Server server;
+
+  @Inject
+  public HelloWorldServer(Model model, MetricExporter exporter) {
+    this.model = model;
+    this.exporter = exporter;
+  }
 
   private void start() throws IOException {
     /* The port on which the server should run */
@@ -84,12 +98,31 @@ public class HelloWorldServer {
       server.awaitTermination();
     }
   }
+  
+  
+  private static class Module extends AbstractModule {
+    @Override
+    protected void configure() {
+      bind(MetricExporter.class).in(Singleton.class);
+      bind(HelloWorldServer.class).in(Singleton.class);
+      bind(Model.class).in(Singleton.class);
+      
+      try {
+        Properties props = new Properties();
+        props.load(new FileReader("/home/imaman/demo.props"));
+        bind(Properties.class).annotatedWith(Cs236700SetupData.class).toInstance(props);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
 
   /**
    * Main launches the server from the command line.
    */
   public static void main(String[] args) throws IOException, InterruptedException {
-    final HelloWorldServer server = new HelloWorldServer();
+    Injector injector = Guice.createInjector(new Module());
+    HelloWorldServer server = injector.getInstance(HelloWorldServer.class);
     server.start();
     server.blockUntilShutdown();
   }

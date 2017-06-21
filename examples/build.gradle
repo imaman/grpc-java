@@ -31,6 +31,9 @@ dependencies {
   // This is a REALLY BAD EXAMPLE for writing gradle files (absolute paths
   // on the local machine should not be used). 
   compile files("/home/imaman/tools/aws-java-sdk/lib/aws-java-sdk-1.11.151.jar",
+	"/home/imaman/tools/guice-4.1.0.jar",
+	"/home/imaman/tools/javax-inject.jar",
+	"/home/imaman/tools/aopalliance-1.0.jar",
 	"/home/imaman/tools/aws-java-sdk/third-party/lib/aspectjrt-1.8.2.jar",
 	"/home/imaman/tools/aws-java-sdk/third-party/lib/aspectjweaver.jar",
 	"/home/imaman/tools/aws-java-sdk/third-party/lib/aws-swf-build-tools-1.1.jar",

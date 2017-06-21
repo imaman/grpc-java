@@ -1,6 +1,9 @@
 package io.grpc.examples.helloworld;
 
-import java.io.FileReader;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,16 +32,21 @@ import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 import com.amazonaws.services.dynamodbv2.model.PutItemResult;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
+import com.google.inject.BindingAnnotation;
+import com.google.inject.Inject;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 public class Model {  
   private static final String TABLE_NAME = "cs_236700_posts";
   private final AmazonDynamoDBAsync client;
+
+  @BindingAnnotation @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD }) 
+  @Retention(RetentionPolicy.RUNTIME)
+  public @interface Cs236700SetupData {}
   
-  public Model() {
+  @Inject
+  public Model(@Cs236700SetupData Properties props) {
     try {
-      Properties props = new Properties();
-      props.load(new FileReader("/home/imaman/demo.props"));
       AWSCredentials credentials = new BasicAWSCredentials(props.getProperty("AWS_ACCESS_KEY"), 
           props.getProperty("AWS_SECRET_KEY"));
       AWSCredentialsProvider credentialsProvider = new AWSStaticCredentialsProvider(credentials);
