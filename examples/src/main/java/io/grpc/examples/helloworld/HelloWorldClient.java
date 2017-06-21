@@ -84,6 +84,26 @@ public class HelloWorldClient {
     HelloRequest request = HelloRequest.newBuilder().setName(name).setYearOfBirth(yearOfBirth).build();
     asyncStub.sayHello(request, replyObserver);
   }
+  
+  public void addPost(String user, String title, String body, Runnable onDone, Consumer<Throwable> onError) {
+    StreamObserver<AddFeedEntryResponse> responseObserver = new StreamObserver<AddFeedEntryResponse>() {
+      @Override public void onCompleted() { onDone.run(); }
+      @Override public void onError(Throwable e) { onError.accept(e); }
+
+      @Override
+      public void onNext(AddFeedEntryResponse repsonse) {
+        logger.info("Got reply:\n" + repsonse.toString());
+      }
+    };
+    
+    Post post = Post.newBuilder().setTitle(title).setBody(body).build();
+    AddFeedEntryRequest request = AddFeedEntryRequest .newBuilder()
+        .setUserId(user)
+        .setPost(post)
+        .build();
+    asyncStub.withDeadlineAfter(2500, TimeUnit.MILLISECONDS).addFeedEntry(request, responseObserver);    
+  }
+  
 
   public void getFeed(String userId, Runnable onDone, Consumer<Throwable> onError) {
     StreamObserver<GetFeedResponse> responseObserver = new StreamObserver<GetFeedResponse>() {
@@ -92,16 +112,17 @@ public class HelloWorldClient {
 
       @Override
       public void onNext(GetFeedResponse repsonse) {
-        logger.info("Got reply:\n" + repsonse.toString());
+        System.out.println("Here is the feed:");
+        for (Post curr : repsonse.getPostList()) {
+          System.out.println(curr.getTitle() + ": " + curr.getBody());
+        }
       }
     };
     
     GetFeedRequest request = GetFeedRequest.newBuilder()
         .setUserId(userId)
-        .addSearchFor("word_1")
-        .addSearchFor("word_2")
         .build();
-    asyncStub.withDeadlineAfter(500, TimeUnit.MILLISECONDS).getFeed(request, responseObserver);
+    asyncStub.withDeadlineAfter(2500, TimeUnit.MILLISECONDS).getFeed(request, responseObserver);
   }
   
   /**
@@ -109,17 +130,22 @@ public class HelloWorldClient {
    * greeting.
    */
   public static void main(String[] args) throws Exception {
-    HelloWorldClient client = new HelloWorldClient("localhost", 50051);
     /* Access a service running on the local machine on port 50051 */
-    String user = "Batman";
-    if (args.length > 0) {
-      user = args[0]; /* Use the arg as the name to greet if provided */
-    }
-    CountDownLatch latch = new CountDownLatch(3);
-    client.greet(user, 2008, latch::countDown);
-    client.getFeed("1", latch::countDown, t -> { logger.info("failure=" + t); latch.countDown(); });
-    client.getFeed("2", latch::countDown, t -> { logger.info("failure=" + t); latch.countDown(); });
-    latch.await();
+    HelloWorldClient client = new HelloWorldClient("localhost", 50051);
+    
+//    CountDownLatch writeLatch = new CountDownLatch(5);
+//    client.addPost("Batman", "Batman Begins", "1 blah blah blah", writeLatch::countDown, t -> { logger.info("f1=" + t); writeLatch.countDown(); });
+//    client.addPost("Batman", "The Dark Knight", "2 blah blah blah", writeLatch::countDown, t -> { logger.info("f2=" + t); writeLatch.countDown(); });
+//    client.addPost("Spiderman", "Spiderman", "3 blah blah blah", writeLatch::countDown, t -> { logger.info("f3=" + t); writeLatch.countDown(); });
+//    client.addPost("Spiderman", "The Amazing Spiderman", "4 blah blah blah", writeLatch::countDown, t -> { logger.info("f4=" + t); writeLatch.countDown(); });
+//    client.addPost("Batman", "The Dark Knight Rises", "5 blah blah blah", writeLatch::countDown, t -> { logger.info("f5=" + t); writeLatch.countDown(); });
+//    writeLatch.await();
+
+    CountDownLatch readLatch = new CountDownLatch(2);
+    client.getFeed("Batman", readLatch::countDown, t -> { logger.info("f6=" + t); readLatch.countDown(); });
+    client.getFeed("Spiderman", readLatch::countDown, t -> { logger.info("f7=" + t); readLatch.countDown(); });
+    readLatch.await();
+    
     client.shutdown();
   }
 }
